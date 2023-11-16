@@ -2,33 +2,48 @@ pub mod worker;
 
 use std::cell::RefCell;
 use std::collections::VecDeque;
+use crate::pool::worker::Worker;
 
-#[allow(dead_code, unused_variables)]
 pub struct Pool {
     pub capacity: u32,
     pub workers: Vec<RefCell<worker::Worker>>,
-    // NOTE: jobs is a queue of closures that take no arguments and return nothing
     pub jobs: VecDeque<Box<dyn FnOnce() -> () + Send + 'static>>,
 }
 
 impl Pool {
-    #[allow(dead_code, unused_variables)]
     pub fn new(capacity: u32) -> Pool {
-        todo!()
+        Pool {
+            capacity,
+            workers: Vec::new(),
+            jobs: VecDeque::new(),
+        }
     }
 
-    #[allow(dead_code, unused_variables)]
     pub fn add<F>(&mut self, target: F)
     where
         F: FnOnce() + Send + 'static,
     {
-        // TODO: add job to jobs
-        todo!()
+        self.jobs.push_back(Box::new(target));
     }
 
-    #[allow(dead_code, unused_variables)]
     pub fn start(mut self) {
-        // TODO: start workers
-        todo!()
+        for i in 0..self.capacity {
+            self.workers.push(RefCell::new(Worker::new(i, format!("Worker {}", i))))
+        }
+
+        while !self.jobs.is_empty() {
+            for worker in &self.workers {
+                let mut worker = worker.borrow_mut();
+                if worker.handle.is_none() || worker.is_finished() {
+                    let job = self.jobs.pop_front().unwrap();
+                    worker.run(job);
+                    break;
+                }
+            }
+        }
+
+        for worker in self.workers {
+            worker.take().join();
+        }
     }
 }

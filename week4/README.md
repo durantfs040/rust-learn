@@ -12,7 +12,7 @@ Each worker runs on job at a time
 
 Keep finding unfinished jobs and assign to idle worker
 
-## Some keypoints I didn't mentioned...
+## Some key points I didn't mention...
 
 ### Send and Sync trait
 

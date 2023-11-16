@@ -1,6 +1,6 @@
 mod pool;
 
-use std::thread::sleep;
+use std::thread::{sleep};
 
 fn main() {
     let mut pool = pool::Pool::new(4);
@@ -29,6 +29,5 @@ fn main() {
         println!("Hello from job 6!");
     });
 
-    // 3 1 2 6 5 4
     pool.start();
 }

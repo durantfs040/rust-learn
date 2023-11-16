@@ -1,7 +1,7 @@
-use std::thread::JoinHandle;
+use std::thread::{JoinHandle, spawn};
 
-#[allow(dead_code, unused_variables)]
-#[derive(Debug)]
+
+#[derive(Default)]
 pub struct Worker {
     pub id: u32,
     pub name: String,
@@ -9,30 +9,27 @@ pub struct Worker {
 }
 
 impl Worker {
-    #[allow(dead_code, unused_variables)]
     pub fn new(id: u32, name: String) -> Self {
-        todo!()
+        Worker {
+            id,
+            name,
+            handle: None,
+        }
     }
 
-    #[allow(dead_code, unused_variables)]
     pub fn run<F>(&mut self, target: F)
     where
         F: FnOnce() + Send + 'static,
     {
-        // TODO: spawn thread
-        todo!()
+        self.handle = Some(spawn(target));
     }
 
-    #[allow(dead_code, unused_variables)]
     pub fn is_finished(&self) -> bool {
-        // TODO: check if thread is finished
-        todo!()
+        self.handle.as_ref().unwrap().is_finished()
     }
 
     // NOTE: this function takes ownership, think about why
-    #[allow(dead_code, unused_variables)]
     pub fn join(self) {
-        // TODO: join thread
-        todo!()
+        self.handle.unwrap().join().unwrap();
     }
 }

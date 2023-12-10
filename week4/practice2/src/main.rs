@@ -1,6 +1,6 @@
 mod pool;
 
-use std::thread::{sleep};
+use std::thread::sleep;
 
 fn main() {
     let mut pool = pool::Pool::new(4);

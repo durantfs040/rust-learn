@@ -44,6 +44,6 @@ impl Pool {
 
         for worker in self.workers {
             worker.take().join();
-        }
+        }   
     }
 }

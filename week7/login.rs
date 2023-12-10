@@ -1,5 +1,5 @@
-use axum::{extract::Json, response::{IntoResponse, Response}, http::{StatusCode, header::SET_COOKIE}, body::Body};
-use serde::Deserialize;
+use axum::{extract::Json, response::{IntoResponse, Response}, http::{StatusCode, header::{CONTENT_TYPE, SET_COOKIE}}, body::Body};
+use serde::{Deserialize, Serialize};
 use sqlx::MySqlPool;
 use std::env::var;
 use uuid::Uuid;
@@ -11,6 +11,17 @@ use redis::AsyncCommands;
 pub struct LoginRequest {
     username: String,
     password: String,
+}
+
+#[derive(Serialize)]
+pub struct LoginResponse {
+    token: String,
+}
+
+
+#[derive(Serialize)]
+struct Error {
+    err: String,
 }
 
 pub async fn login(Json(LoginRequest { username, password }): Json<LoginRequest>) -> impl IntoResponse {
@@ -27,11 +38,11 @@ pub async fn login(Json(LoginRequest { username, password }): Json<LoginRequest>
 
     let user = match user {
         Ok(user) => user,
-        Err(_) => return (StatusCode::UNAUTHORIZED, "Invalid username").into_response(),
+        Err(_) => return (StatusCode::UNAUTHORIZED, serde_json::to_string(&Error { err: "Invalid username".to_string() }).unwrap()).into_response(),
     };
 
     if password != user.password {
-        return (StatusCode::UNAUTHORIZED, "Invalid password").into_response();
+        return (StatusCode::UNAUTHORIZED, serde_json::to_string(&Error { err: "Invalid password".to_string() }).unwrap()).into_response();
     }
 
     let expiration_time = 60 * 60 * 24;
@@ -46,8 +57,9 @@ pub async fn login(Json(LoginRequest { username, password }): Json<LoginRequest>
 
     let cookie = format!("token={}; Max-Age={}; Path=/; HttpOnly", token, expiration_time);
 
-    let mut response = Response::new(Body::from(token));
+    let mut response = Response::new(Body::from(serde_json::to_string(&LoginResponse { token }).unwrap()));
     response.headers_mut().insert(SET_COOKIE, cookie.parse().unwrap());
+    response.headers_mut().insert(CONTENT_TYPE, "application/json".parse().unwrap());
     response.into_response()
 
 
